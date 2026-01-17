@@ -64,9 +64,17 @@ func ConvertPDF(c *gin.Context) {
 	// Handle image files - convert directly to base64
 	if ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
 		base64Image := utils.ConvertImageToBase64(fileData)
+		mimetype := "image/png"
+		extension := "png"
+		if ext == ".jpg" || ext == ".jpeg" {
+			mimetype = "image/jpeg"
+			extension = "jpg"
+		}
 		c.JSON(http.StatusOK, gin.H{
-			"message": "success",
-			"data":    []string{base64Image},
+			"message":   "success",
+			"mimetype":  mimetype,
+			"extension": extension,
+			"data":      []string{base64Image},
 		})
 		return
 	}
@@ -91,7 +99,9 @@ func ConvertPDF(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "success",
-		"data":    base64Images,
+		"message":   "success",
+		"mimetype":  "image/png",
+		"extension": "png",
+		"data":      base64Images,
 	})
 }
