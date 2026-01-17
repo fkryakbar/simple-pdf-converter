@@ -94,3 +94,8 @@ func ConvertPDFToBase64PNG(pdfData []byte) ([]string, error) {
 
 	return base64Images, nil
 }
+
+// ConvertImageToBase64 converts an image file (PNG, JPG, JPEG) to base64 encoded string
+func ConvertImageToBase64(imageData []byte) string {
+	return base64.StdEncoding.EncodeToString(imageData)
+}

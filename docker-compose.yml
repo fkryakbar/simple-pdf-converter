@@ -1,0 +1,25 @@
+services:
+  pdf-converter:
+    image: ghcr.io/fkryakbar/simple-pdf-converter:latest
+    container_name: simple-pdf-converter
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      - API_KEY=${API_KEY:-your_secret_api_key}
+      - TZ=Asia/Jakarta
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/convert || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+          cpus: '0.25'

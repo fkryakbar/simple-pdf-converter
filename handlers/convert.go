@@ -25,15 +25,22 @@ func ConvertPDF(c *gin.Context) {
 
 	// Validate file extension
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	if ext != ".pdf" {
+	allowedExtensions := map[string]bool{
+		".pdf":  true,
+		".png":  true,
+		".jpg":  true,
+		".jpeg": true,
+	}
+
+	if !allowedExtensions[ext] {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid file type. Only PDF files are allowed",
+			"message": "Invalid file type. Only PDF and image files (PNG, JPG, JPEG) are allowed",
 			"data":    nil,
 		})
 		return
 	}
 
-	// Validate MIME type
+	// Open the file
 	fileHeader, err := file.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -45,7 +52,7 @@ func ConvertPDF(c *gin.Context) {
 	defer fileHeader.Close()
 
 	// Read file content
-	pdfData, err := io.ReadAll(fileHeader)
+	fileData, err := io.ReadAll(fileHeader)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to read uploaded file",
@@ -54,8 +61,18 @@ func ConvertPDF(c *gin.Context) {
 		return
 	}
 
-	// Check PDF magic bytes
-	if len(pdfData) < 4 || string(pdfData[:4]) != "%PDF" {
+	// Handle image files - convert directly to base64
+	if ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+		base64Image := utils.ConvertImageToBase64(fileData)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+			"data":    []string{base64Image},
+		})
+		return
+	}
+
+	// For PDF files, check magic bytes
+	if len(fileData) < 4 || string(fileData[:4]) != "%PDF" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid file content. The file is not a valid PDF",
 			"data":    nil,
@@ -64,7 +81,7 @@ func ConvertPDF(c *gin.Context) {
 	}
 
 	// Convert PDF to PNG base64
-	base64Images, err := utils.ConvertPDFToBase64PNG(pdfData)
+	base64Images, err := utils.ConvertPDFToBase64PNG(fileData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to convert PDF: " + err.Error(),
